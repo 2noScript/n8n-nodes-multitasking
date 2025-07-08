@@ -31,12 +31,6 @@ export const videoOperations: INodeProperties[] = [
 				action: 'Get many videos',
 			},
 			{
-				name: 'Rate',
-				value: 'rate',
-				description: 'Rate a video',
-				action: 'Rate a video',
-			},
-			{
 				name: 'Update',
 				value: 'update',
 				description: 'Update a video',

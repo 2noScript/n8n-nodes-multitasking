@@ -6,7 +6,8 @@ import type {
 	IHttpRequestMethods,
 	IRequestOptions,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
+import { DateTime } from 'luxon';
 
 export async function googleApiRequest(
 	this: IExecuteFunctions | ILoadOptionsFunctions,
@@ -62,4 +63,21 @@ export async function googleApiRequestAllItems(
 	} while (responseData.nextPageToken !== undefined && responseData.nextPageToken !== '');
 
 	return returnData;
+}
+
+export function validateAndSetDate(
+	filter: IDataObject,
+	key: string,
+	timezone: string,
+	context: IExecuteFunctions,
+) {
+	const date = DateTime.fromISO(filter[key] as string);
+	if (date.isValid) {
+		filter[key] = date.setZone(timezone).toISO();
+	} else {
+		throw new NodeOperationError(
+			context.getNode(),
+			`The value "${filter[key] as string}" is not a valid DateTime.`,
+		);
+	}
 }
