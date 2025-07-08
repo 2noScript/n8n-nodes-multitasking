@@ -53,5 +53,8 @@
   },
   "peerDependencies": {
     "n8n-workflow": "*"
+  },
+  "dependencies": {
+    "stream": "^0.0.3"
   }
 }
