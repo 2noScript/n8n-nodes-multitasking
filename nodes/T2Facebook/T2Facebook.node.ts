@@ -10,9 +10,9 @@ export class T2Facebook implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2Facebook',
 		name: 't2Facebook',
-		icon:'file:facebook.svg',
-		
-		group: ['transform'],
+		icon: 'file:facebook.svg',
+
+		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',
 		defaults: {
@@ -20,17 +20,28 @@ export class T2Facebook implements INodeType {
 		},
 		inputs: [NodeConnectionType.Main],
 		outputs: [NodeConnectionType.Main],
+		credentials: [
+			{
+				name: 'facebookGraphApi',
+				required: true,
+			},
+		],
 		usableAsTool: true,
 		properties: [
 			// Node properties which the user gets displayed and
 			// can change on the node.
 			{
-				displayName: 'My String',
-				name: 'myString',
-				type: 'string',
-				default: '',
-				placeholder: 'Placeholder value',
-				description: 'The description text',
+				displayName: 'Resource',
+				name: 'resource',
+				type: 'options',
+				noDataExpression: true,
+				options: [
+					{
+						name: 'Reels',
+						value: 'video_reels',
+					},
+				],
+				default: 'video_reels',
 			},
 		],
 	};
@@ -41,8 +52,6 @@ export class T2Facebook implements INodeType {
 	// You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
-
-	
 
 		// Iterates over all input items and add the key "myString" with the
 		// value the parameter "myString" resolves to.

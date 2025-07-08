@@ -63,6 +63,21 @@ export const videoFields: INodeProperties[] = [
 			},
 		},
 		default: '',
+	    description:""
+	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				operation: ['upload'],
+				resource: ['video'],
+			},
+		},
+		default: '',
+		description: "The video's description",
 	},
 	{
 		// eslint-disable-next-line n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options
@@ -138,13 +153,13 @@ export const videoFields: INodeProperties[] = [
 				description:
 					'The language of the text in the playlist resource\'s title and description properties. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
-			{
-				displayName: 'Description',
-				name: 'description',
-				type: 'string',
-				default: '',
-				description: "The playlist's description",
-			},
+			// {
+			// 	displayName: 'Description',
+			// 	name: 'description',
+			// 	type: 'string',
+			// 	default: '',
+			// 	description: "The playlist's description",
+			// },
 			{
 				displayName: 'Embeddable',
 				name: 'embeddable',

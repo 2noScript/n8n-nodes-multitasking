@@ -54,7 +54,7 @@ export class T2YouTube implements INodeType {
 						value: 'video',
 					},
 				],
-				default: 'channel',
+				default: 'video',
 			},
 			...videoOperations,
 			...videoFields,
@@ -248,8 +248,8 @@ export class T2YouTube implements INodeType {
 						const title = this.getNodeParameter('title', i) as string;
 						const categoryId = this.getNodeParameter('categoryId', i) as string;
 						const options = this.getNodeParameter('options', i);
+						const description=this.getNodeParameter('description', i) as string;
 						const binaryProperty = this.getNodeParameter('binaryProperty', i);
-
 						const binaryData = this.helpers.assertBinaryData(i, binaryProperty);
 
 						let mimeType: string;
@@ -273,7 +273,7 @@ export class T2YouTube implements INodeType {
 							snippet: {
 								title,
 								categoryId,
-								description: options.description,
+								description,
 								tags: (options.tags as string)?.split(','),
 								defaultLanguage: options.defaultLanguage,
 							},
