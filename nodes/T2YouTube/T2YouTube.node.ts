@@ -11,21 +11,22 @@ import { BINARY_ENCODING, NodeConnectionType, NodeOperationError } from 'n8n-wor
 import { videoFields, videoOperations } from './src/VideoDescription';
 //@ts-ignore
 import { Readable } from 'stream';
-import { isoCountryCodes } from '../Shared/ISOCountryCodes';
+import { isoCountryCodes } from './src/ISOCountryCodes';
 import {
 	googleApiRequest,
 	googleApiRequestAllItems,
 	validateAndSetDate,
 } from './src/GenericFunctions';
 import { Buffer } from 'buffer';
+import { UPLOAD_CHUNK_SIZE } from './src/settings';
 
-const UPLOAD_CHUNK_SIZE = 1024 * 1024;
+
 
 export class T2YouTube implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2YouTube',
 		name: 't2YouTube',
-		icon: 'file:t2YouTube.svg',
+		icon: 'file:youTube.svg',
 		group: ['input'],
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		version: 1,

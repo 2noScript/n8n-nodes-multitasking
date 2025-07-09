@@ -48,9 +48,6 @@ export const videoOperations: INodeProperties[] = [
 ];
 
 export const videoFields: INodeProperties[] = [
-	/* -------------------------------------------------------------------------- */
-	/*                                 video:upload                               */
-	/* -------------------------------------------------------------------------- */
 	{
 		displayName: 'Title',
 		name: 'title',

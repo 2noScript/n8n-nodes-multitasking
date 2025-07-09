@@ -1,17 +1,21 @@
 import type {
+	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	IRequestOptions,
+	JsonObject,
 } from 'n8n-workflow';
-import { NodeConnectionType } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionType } from 'n8n-workflow';
+import { reelDescription, reelFields } from './src/ReelDescription';
+import { allowUnauthorizedCerts, API_VERSION, hostUrl } from './src/settings';
 
 export class T2Facebook implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2Facebook',
 		name: 't2Facebook',
 		icon: 'file:facebook.svg',
-
 		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',
@@ -28,8 +32,6 @@ export class T2Facebook implements INodeType {
 		],
 		usableAsTool: true,
 		properties: [
-			// Node properties which the user gets displayed and
-			// can change on the node.
 			{
 				displayName: 'Resource',
 				name: 'resource',
@@ -43,45 +45,85 @@ export class T2Facebook implements INodeType {
 				],
 				default: 'video_reels',
 			},
+			...reelDescription,
+			...reelFields,
 		],
 	};
 
-	// The function below is responsible for actually doing whatever this node
-	// is supposed to do. In this case, we're just appending the `myString` property
-	// with whatever the user has entered.
-	// You can make async calls and use `await`.
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 		const items = this.getInputData();
+		const resource = this.getNodeParameter('resource', 0);
+		const operation = this.getNodeParameter('operation', 0);
 
-		// Iterates over all input items and add the key "myString" with the
-		// value the parameter "myString" resolves to.
-		// (This could be a different value for each item in case it contains an expression)
-		// for (let itemIndex = 0; itemIndex < items.length; itemIndex++) {
-		// 	try {
-		// 		myString = this.getNodeParameter('myString', itemIndex, '') as string;
-		// 		item = items[itemIndex];
+		const returnData: INodeExecutionData[] = [];
+		const baseUri = `https://${hostUrl}/${API_VERSION}`;
+		const graphApiCredentials = await this.getCredentials('facebookGraphApi');
 
-		// 		item.json.myString = myString;
-		// 	} catch (error) {
-		// 		// This node should never fail but we want to showcase how
-		// 		// to handle errors.
-		// 		if (this.continueOnFail()) {
-		// 			items.push({ json: this.getInputData(itemIndex)[0].json, error, pairedItem: itemIndex });
-		// 		} else {
-		// 			// Adding `itemIndex` allows other workflows to handle this error
-		// 			if (error.context) {
-		// 				// If the error thrown already contains the context property,
-		// 				// only append the itemIndex
-		// 				error.context.itemIndex = itemIndex;
-		// 				throw error;
-		// 			}
-		// 			throw new NodeOperationError(this.getNode(), error, {
-		// 				itemIndex,
-		// 			});
-		// 		}
-		// 	}
-		// }
+		for (let i = 0; i < items.length; i++) {
+			try {
+				const qs: IDataObject = {
+					access_token: graphApiCredentials.accessToken,
+				};
+				if (resource === 'video_reels') {
+					if (operation === 'upload') {
+						qs['upload_phase'] = 'start';
 
-		return [items];
+						const sessionUploadRequestOption: IRequestOptions = {
+							headers: {
+								accept: 'application/json,text/*;q=0.99',
+							},
+							method: 'POST',
+							json: true,
+							gzip: true,
+							uri: `${baseUri}/${graphApiCredentials.userId}/video_reels`,
+							rejectUnauthorized: !allowUnauthorizedCerts,
+							qs: qs,
+						};
+
+						// const title = this.getNodeParameter('title', i);
+						// const description = this.getNodeParameter('description', i);
+						sessionUploadRequestOption.qs = {
+							...qs,
+							upload_phase: 'start',
+						};
+						try {
+							const responseSessionUpload = await this.helpers.request(sessionUploadRequestOption);
+							returnData.push({ json: responseSessionUpload });
+						} catch (error) {
+							if (!this.continueOnFail()) {
+								throw new NodeApiError(this.getNode(), error as JsonObject);
+							}
+							let errorItem;
+							if (error.response !== undefined) {
+								const graphApiErrors = error.response.body?.error ?? {};
+
+								errorItem = {
+									statusCode: error.statusCode,
+									...graphApiErrors,
+									headers: error.response.headers,
+								};
+							} else {
+								errorItem = error;
+							}
+							returnData.push({ json: { ...errorItem } });
+
+							continue;
+						}
+					}
+				}
+			} catch (error) {
+				if (this.continueOnFail()) {
+					const executionErrorData = this.helpers.constructExecutionMetaData(
+						this.helpers.returnJsonArray({ error: error.message }),
+						{ itemData: { item: i } },
+					);
+					returnData.push(...executionErrorData);
+					continue;
+				}
+				throw error;
+			}
+		}
+
+		return [returnData];
 	}
 }
