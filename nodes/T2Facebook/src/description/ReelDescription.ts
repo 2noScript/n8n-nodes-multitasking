@@ -43,7 +43,7 @@ export const reelDescription: INodeProperties[] = [
 				action: 'Upload a Reel',
 			},
 		],
-		default: 'getAll',
+		default: 'upload',
 	},
 ];
 
@@ -60,5 +60,65 @@ export const reelFields: INodeProperties[] = [
 			},
 		},
 		default: '',
+	},
+	{
+		displayName: 'Description',
+		name: 'description',
+		type: 'string',
+		required: true,
+		displayOptions: {
+			show: {
+				operation: ['upload'],
+				resource: ['video_reels'],
+			},
+		},
+		default: '',
+		description: "The video's description",
+	},
+	{
+		displayName: 'Input Binary Field',
+		name: 'binaryProperty',
+		type: 'string',
+		required: true,
+		hint: 'The name of the input binary field containing the file to be uploaded',
+		displayOptions: {
+			show: {
+				operation: ['upload'],
+				resource: ['video_reels'],
+			},
+		},
+		default: 'data',
+	},
+	{
+		displayName: 'Update Fields',
+		name: 'updateFields',
+		type: 'collection',
+		placeholder: 'Add option',
+		default: {},
+		displayOptions: {
+			show: {
+				operation: ['upload'],
+				resource: ['video_reels'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Publish',
+				name: 'publish',
+				type: 'options',
+				options: [
+					{
+						name: 'Published',
+						value: 'PUBLISHED',
+					},
+					{
+						name: 'Draft',
+						value: 'DRAFT',
+					},
+				],
+				default: 'DRAFT',
+				description: 'Publish status',
+			},
+		],
 	},
 ];

@@ -1,15 +1,16 @@
 import type {
-	IDataObject,
 	IExecuteFunctions,
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	IRequestOptions,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError, NodeConnectionType } from 'n8n-workflow';
-import { reelDescription, reelFields } from './src/ReelDescription';
-import { allowUnauthorizedCerts, API_VERSION, hostUrl } from './src/settings';
+import {  NodeApiError, NodeConnectionType } from 'n8n-workflow';
+import { reelDescription, reelFields } from './src/description/ReelDescription';
+import { captureError } from './src/GenericFunctions';
+//@ts-ignore
+import { Readable } from 'stream';
+import {reelHandler,Publish} from './src/handlers/reelHandler';
 
 export class T2Facebook implements INodeType {
 	description: INodeTypeDescription = {
@@ -56,57 +57,26 @@ export class T2Facebook implements INodeType {
 		const operation = this.getNodeParameter('operation', 0);
 
 		const returnData: INodeExecutionData[] = [];
-		const baseUri = `https://${hostUrl}/${API_VERSION}`;
-		const graphApiCredentials = await this.getCredentials('facebookGraphApi');
 
 		for (let i = 0; i < items.length; i++) {
 			try {
-				const qs: IDataObject = {
-					access_token: graphApiCredentials.accessToken,
-				};
 				if (resource === 'video_reels') {
 					if (operation === 'upload') {
-						qs['upload_phase'] = 'start';
-
-						const sessionUploadRequestOption: IRequestOptions = {
-							headers: {
-								accept: 'application/json,text/*;q=0.99',
-							},
-							method: 'POST',
-							json: true,
-							gzip: true,
-							uri: `${baseUri}/${graphApiCredentials.userId}/video_reels`,
-							rejectUnauthorized: !allowUnauthorizedCerts,
-							qs: qs,
-						};
-
-						// const title = this.getNodeParameter('title', i);
-						// const description = this.getNodeParameter('description', i);
-						sessionUploadRequestOption.qs = {
-							...qs,
-							upload_phase: 'start',
-						};
 						try {
-							const responseSessionUpload = await this.helpers.request(sessionUploadRequestOption);
-							returnData.push({ json: responseSessionUpload });
+							const title = this.getNodeParameter('title', i) as string;
+							const description = this.getNodeParameter('description', i) as string;
+							const binaryProperty = this.getNodeParameter('binaryProperty', i);
+							const binaryData = this.helpers.assertBinaryData(i, binaryProperty);
+							const updateFields = this.getNodeParameter('updateFields', i);
+
+							const rs = await reelHandler.uploadReel(this, title, description, binaryData,updateFields.publish as Publish );
+							returnData.push({ json: rs });
 						} catch (error) {
 							if (!this.continueOnFail()) {
 								throw new NodeApiError(this.getNode(), error as JsonObject);
 							}
-							let errorItem;
-							if (error.response !== undefined) {
-								const graphApiErrors = error.response.body?.error ?? {};
 
-								errorItem = {
-									statusCode: error.statusCode,
-									...graphApiErrors,
-									headers: error.response.headers,
-								};
-							} else {
-								errorItem = error;
-							}
-							returnData.push({ json: { ...errorItem } });
-
+							returnData.push({ json: captureError(error) });
 							continue;
 						}
 					}
