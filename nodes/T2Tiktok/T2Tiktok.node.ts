@@ -14,7 +14,7 @@ export class T2Tiktok implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2Tiktok',
 		name: 't2Tiktok',
-		icon: 'file:tiktok.svg',
+		icon: 'file:T2Tiktok.svg',
 		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',

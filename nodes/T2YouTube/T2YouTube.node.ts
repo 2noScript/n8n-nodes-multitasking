@@ -26,7 +26,7 @@ export class T2YouTube implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2YouTube',
 		name: 't2YouTube',
-		icon: 'file:youTube.svg',
+		icon: 'file:T2YouTube.svg',
 		group: ['input'],
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
 		version: 1,

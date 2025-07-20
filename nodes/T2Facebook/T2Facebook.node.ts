@@ -16,7 +16,7 @@ export class T2Facebook implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'T2Facebook',
 		name: 't2Facebook',
-		icon: 'file:facebook.svg',
+		icon: 'file:T2FaceBook.svg',
 		group: ['input'],
 		version: 1,
 		description: 'Basic Example Node',

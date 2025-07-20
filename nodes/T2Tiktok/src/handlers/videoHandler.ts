@@ -24,19 +24,19 @@ class VideoHandler {
 			'User-Agent': this.UA,
 			'X-Secsdk-Csrf-Request': '1',
 			'X-Secsdk-Csrf-Version': '1.2.8',
-            'Cookie':tiktokApi.cookie,
+			Cookie: tiktokApi.cookie,
 		};
 	}
 
-	private checkScheduleTime(schedule_time_num: number) {
-		if (schedule_time_num < this.MIN_MARGIN_SCHEDULE_TIME) {
-			schedule_time_num = this.MIN_MARGIN_SCHEDULE_TIME;
-		}
-		if (schedule_time_num > this.MAX_MARGIN_SCHEDULE_TIME) {
-			schedule_time_num = this.MAX_MARGIN_SCHEDULE_TIME;
-		}
-		return schedule_time_num;
-	}
+	// private checkScheduleTime(schedule_time_num: number) {
+	// 	if (schedule_time_num < this.MIN_MARGIN_SCHEDULE_TIME) {
+	// 		schedule_time_num = this.MIN_MARGIN_SCHEDULE_TIME;
+	// 	}
+	// 	if (schedule_time_num > this.MAX_MARGIN_SCHEDULE_TIME) {
+	// 		schedule_time_num = this.MAX_MARGIN_SCHEDULE_TIME;
+	// 	}
+	// 	return schedule_time_num;
+	// }
 
 	async uploadVideo(
 		exc: IExecuteFunctions,
@@ -46,20 +46,15 @@ class VideoHandler {
 		url_prefix?: string,
 		schedule_time?: number,
 	) {
+		const headers = await this.getHeader(exc);
+		const creation_id = this.getCreationId();
+		const url_creation = `https://${url_prefix ?? 'www'}.tiktok.com/api/v1/web/project/create/?creation_id=${creation_id}&type=1&aid=1988`;
 
-        const headers=await this.getHeader(exc);
-        const creation_id = this.getCreationId();
-        const url_creation = `https://${url_prefix??"www"}.tiktok.com/api/v1/web/project/create/?creation_id=${creation_id}&type=1&aid=1988`
-
-        const res_url_creation = await exc.helpers.request({
-            method: 'POST',
-            url: url_creation,
-            headers,
-        });
-
-
-
-
+		// const res_url_creation = await exc.helpers.request({
+		//     method: 'POST',
+		//     url: url_creation,
+		//     headers,
+		// });
 
 		return {
 			url_prefix,
@@ -67,6 +62,8 @@ class VideoHandler {
 			tags,
 			UA: this.UA,
 			schedule_time,
+			headers,
+			url_creation,
 		};
 	}
 }
