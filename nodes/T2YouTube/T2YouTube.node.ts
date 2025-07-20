@@ -18,7 +18,7 @@ import {
 	validateAndSetDate,
 } from './src/GenericFunctions';
 import { Buffer } from 'buffer';
-import { UPLOAD_CHUNK_SIZE } from './src/settings';
+import { UPLOAD_CHUNK_SIZE } from '../share/globalConstant';
 
 
 

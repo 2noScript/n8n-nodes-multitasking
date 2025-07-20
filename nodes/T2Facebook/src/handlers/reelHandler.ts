@@ -7,8 +7,9 @@ import {
 } from 'n8n-workflow';
 //@ts-ignore
 import { Readable } from 'stream';
-import { allowUnauthorizedCerts, API_VERSION, hostUrl, UPLOAD_CHUNK_SIZE } from '../settings';
+import { allowUnauthorizedCerts, API_VERSION, hostUrl } from '../settings';
 import { Buffer } from 'buffer';
+import { UPLOAD_CHUNK_SIZE } from '../../../share/globalConstant';
 
 
 export type Publish = "PUBLISHED"|"DRAFT"
