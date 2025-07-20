@@ -42,10 +42,10 @@ Optimize your workflow in n8n — these nodes handle video uploads and validatio
        container_name: n8n
        ports:
        - "5678:5678"
-       env_file:
-       - .env
        environment:
        - N8N_CUSTOM_EXTENSIONS=/home/node/.n8n/custom
+       - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
        volumes:
        - ./n8n_data:/home/node/.n8n
        - {local_path}/n8n-nodes-multitasking:/home/node/.n8n/custom/n8n-nodes-multitasking
@@ -68,12 +68,9 @@ Optimize your workflow in n8n — these nodes handle video uploads and validatio
 | T2YouTube   | [README.md](nodes/T2YouTube/README.md)   | ✅ Completed   | 1.0.0   |
 | T2Facebook  | [README.md](nodes/T2Facebook/README.md)  | ✅ Completed   | 1.0.0   |
 | T2Twitter   | [README.md](nodes/T2Twitter/README.md)   | ❌ In Progress | -       |
-| T2LinkedIn  | [README.md](nodes/T2LinkedIn/README.md)  | ❌ In Progress | -       |
-| T2Instagram | [README.md](nodes/T2Instagram/README.md) | ❌ In Progress | 1.0.1   |
-| T2Telegram  | [README.md](nodes/T2Telegram/README.md)  | ❌ In Progress | 1.0.0   |
+| T2Instagram | [README.md](nodes/T2Instagram/README.md) | ❌ In Progress | -       |
+| T2Telegram  | [README.md](nodes/T2Telegram/README.md)  | ❌ In Progress | -       |
 | T2TikTok    | [README.md](nodes/T2TikTok/README.md)    | ❌ In Progress | -       |
-| T2WhatsApp  | [README.md](nodes/T2WhatsApp/README.md)  | ❌ In Progress | 1.0.0   |
-
 
 ## License
 
