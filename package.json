@@ -57,6 +57,7 @@
     "n8n-workflow": "*"
   },
   "dependencies": {
+    "crc-32": "^1.2.2",
     "crypto-js": "^4.2.0",
     "luxon": "^3.6.1",
     "stream": "^0.0.3"

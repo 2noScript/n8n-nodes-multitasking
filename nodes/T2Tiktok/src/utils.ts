@@ -1,10 +1,9 @@
 // import axios from 'axios';
 // import CryptoJS from 'crypto-js';
-// import zlib from 'zlib';
-// import fs from 'fs/promises';
-// import https from 'https';
+// import { Buffer } from 'buffer';
+// import CRC32 from 'crc-32';
 
-// function sign(key, msg) {
+// function sign(key:any, msg:any) {
 //   const keyWords = typeof key === 'string' ? CryptoJS.enc.Utf8.parse(key) : key;
 //   const message = CryptoJS.enc.Utf8.parse(msg);
 //   const hmac = CryptoJS.HmacSHA256(message, keyWords);
@@ -21,7 +20,7 @@
 //   return creationid;
 // }
 
-// function getSignatureKey(key, dateStamp, regionName, serviceName) {
+// function getSignatureKey(key:any, dateStamp:any, regionName:any, serviceName:any) {
 //   const kDate = sign("AWS4" + key, dateStamp);
 //   const kRegion = sign(kDate, regionName);
 //   const kService = sign(kRegion, serviceName);
@@ -29,7 +28,7 @@
 //   return kSigning;
 // }
 
-// function getAWS(access_key, secret_key, session_token, region) {
+// function getAWS(access_key:any, secret_key:any, session_token:any, region:any) {
 //   return {
 //     accessKeyId: access_key,
 //     secretAccessKey: secret_key,
@@ -39,7 +38,7 @@
 //   };
 // }
 
-// function AWSsignature(access_key, secret_key, request_parameters, headers, method = "GET", payload = '', region = "ap-singapore-1", service = "vod") {
+// function AWSsignature(access_key:any, secret_key:any, request_parameters:any, headers:any, method = "GET", payload = '', region = "ap-singapore-1", service = "vod") {
 //   const canonical_uri = '/';
 //   const canonical_querystring = request_parameters;
 //   const canonical_headers = Object.entries(headers).map(([k, v]) => `${k}:${v}`).join('\n') + '\n';
@@ -74,34 +73,24 @@
 //   return signature;
 // }
 
-// function crc32(content) {
-//   const buffer = Buffer.isBuffer(content) ? content : Buffer.from(content);
-//   return zlib.crc32(buffer).toString(16).padStart(8, '0');
+// function crc32(content:any) {
+//   const buffer = typeof content === 'string' ? Buffer.from(content, 'utf8') : content;
+//   const result = CRC32.buf(buffer) >>> 0; // Ensure unsigned 32-bit integer
+//   return result.toString(16).padStart(8, '0');
 // }
 
-// function printResponse(r) {
-//   console.log(`r = ${r}`);
-//   console.log(`r.content = ${r.data}`);
-// }
 
-// function printError(url, r) {
-//   console.error(`[-] An error occurred while reaching ${url}`);
-//   printResponse(r);
-// }
 
-// function assertSuccess(url, r) {
+// function assertSuccess(url:any, r:any) {
 //   if (r.status !== 200) {
-//     printError(url, r);
 //     return false;
 //   }
 //   return true;
 // }
 
-// function log(name) {
-//   console.log(`============${name}===========`);
-// }
 
-// async function getTagsExtra(title, tags, users, session, url_prefix) {
+
+// async function getTagsExtra(title:any, tags:any, users:any, session:any, url_prefix:any) {
 //   const text_extra = [];
 
 //   for (let tag of tags) {

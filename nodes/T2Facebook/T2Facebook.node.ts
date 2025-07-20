@@ -7,10 +7,10 @@ import type {
 } from 'n8n-workflow';
 import {  NodeApiError, NodeConnectionType } from 'n8n-workflow';
 import { reelDescription, reelFields } from './src/description/ReelDescription';
-import { captureError } from './src/GenericFunctions';
 //@ts-ignore
 import { Readable } from 'stream';
 import {reelHandler,Publish} from './src/handlers/reelHandler';
+import { captureError } from '../share/globalUtils';
 
 export class T2Facebook implements INodeType {
 	description: INodeTypeDescription = {

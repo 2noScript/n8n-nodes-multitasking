@@ -1,7 +1,7 @@
 import type {
-	ICredentialDataDecryptedObject,
+	// ICredentialDataDecryptedObject,
 	ICredentialType,
-	IHttpRequestOptions,
+	// IHttpRequestOptions,
 	INodeProperties,
 } from 'n8n-workflow';
 
@@ -21,15 +21,4 @@ export class TiktokApi implements ICredentialType {
 			default: '',
 		},
 	];
-
-	async authenticate(
-		credentials: ICredentialDataDecryptedObject,
-		requestOptions: IHttpRequestOptions,
-	): Promise<IHttpRequestOptions> {
-		if (!requestOptions.headers) {
-			requestOptions.headers = {};
-		}
-		requestOptions.headers['Cookie'] = credentials.cookie as string;
-		return requestOptions;
-	}
 }
