@@ -8,7 +8,7 @@ import { NodeConnectionType } from 'n8n-workflow';
 //@ts-ignore
 import { Readable } from 'stream';
 import { videoDescription, videoFields } from './src/description/VideoDescription';
-import { reelHandler } from './src/handlers/videoHandler';
+import { videoHandler } from './src/handlers/videoHandler';
 
 export class T2Tiktok implements INodeType {
 	description: INodeTypeDescription = {
@@ -61,10 +61,10 @@ export class T2Tiktok implements INodeType {
 					if(operation==="upload"){
 						const title = this.getNodeParameter('title', i) as string;
 						const tags = this.getNodeParameter('tags', i) as string;
-						// const binaryProperty = this.getNodeParameter('binaryProperty', i);
-						// const binaryData = this.helpers.assertBinaryData(i, binaryProperty);
+						const binaryProperty = this.getNodeParameter('binaryProperty', i);
+						const binaryData = this.helpers.assertBinaryData(i, binaryProperty);
 						const updateFields = this.getNodeParameter('updateFields', i);
-						const rs = await reelHandler.uploadVideo(this, title, tags,undefined,updateFields?.url_prefix as string,updateFields.schedule_time as number);
+						const rs = await videoHandler.uploadVideo(this, title, tags,binaryData,updateFields?.url_prefix as string,updateFields.schedule_time as number);
 						returnData.push({ json: rs });
 					}
 			   }

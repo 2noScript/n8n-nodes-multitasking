@@ -51,20 +51,20 @@ export const videoFields: INodeProperties[] = [
         default: '',
         description: "The video's tags",
     },
-    // {
-    //     displayName: 'Input Binary Field',
-    //     name: 'binaryProperty',
-    //     type: 'string',
-    //     required: true,
-    //     hint: 'The name of the input binary field containing the file to be uploaded',
-    //     displayOptions: {
-    //         show: {
-    //             operation: ['upload'],
-    //             resource: ['video'],
-    //         },
-    //     },
-    //     default: 'data',
-    // },
+    {
+        displayName: 'Input Binary Field',
+        name: 'binaryProperty',
+        type: 'string',
+        required: true,
+        hint: 'The name of the input binary field containing the file to be uploaded',
+        displayOptions: {
+            show: {
+                operation: ['upload'],
+                resource: ['video'],
+            },
+        },
+        default: 'data',
+    },
     {
         displayName: 'Update Fields',
         name: 'updateFields',
