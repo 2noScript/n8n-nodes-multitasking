@@ -73,7 +73,7 @@ class VideoHandler {
 
 		const { creationID, project_id } = res_url_creation.project;
 
-		const {videoId, commitResponse} = await this.loadVideo(exc, binaryData);
+		const { videoId, commitResponse } = await this.loadVideo(exc, binaryData);
 
 		const postQuery: Record<string, any> = {
 			app_name: 'tiktok_web',
@@ -114,11 +114,23 @@ class VideoHandler {
 					video_id: videoId,
 					is_long_video: 0,
 					single_post_feature_info: {
-						text: title,
-						text_extra: 'hello world',
-						markup_text: title,
+						// text: title,
+						// text_extra: [],
+						// markup_text: title,
 						music_info: {},
 						poster_delay: 0,
+						text: 'Generated video 1 #ve',
+						text_extra: [
+							{
+								tag_id: '0',
+								start: 18,
+								end: 21,
+								user_id: '',
+								type: 1,
+								hashtag_name: 've',
+							},
+						],
+						markup_text: 'Generated video 1 <h id="0">#ve</h>',
 					},
 				},
 			],
@@ -127,11 +139,7 @@ class VideoHandler {
 		// if (schedule_time ?? 0 > 0) {
 		// 	data.upload_param.schedule_time = schedule_time;
 		// }
-		postQuery['X-Bogus'] = get_x_bogus(
-			qs.stringify(postQuery), 
-			JSON.stringify(data), 
-			this.UA,
-		);
+		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), this.UA);
 
 		const test = await exc.helpers.request({
 			method: 'POST',
@@ -157,9 +165,9 @@ class VideoHandler {
 			creationID,
 			project_id,
 			test,
-			postQuery,	
+			postQuery,
 			commitResponse,
-			params:qs.stringify(postQuery)
+			params: qs.stringify(postQuery),
 		};
 	}
 
@@ -319,7 +327,7 @@ class VideoHandler {
 		return {
 			// signedCommit,
 			commitResponse,
-			videoId
+			videoId,
 		};
 	}
 }
