@@ -1,28 +1,34 @@
-import { IBinaryData, IExecuteFunctions } from 'n8n-workflow';
+import {  IExecuteFunctions } from 'n8n-workflow';
 import aws4 from 'aws4';
 import { crc32 } from 'zlib';
 import crypto from 'crypto';
 import qs from 'qs';
 import { get_x_bogus } from '../algorithm/x_bogus';
 import { extractBinaryData } from '../../../share/globalUtils';
+import {
+	UA,
+	X_SECSDK_CSRF_REQUEST,
+	X_SECSDK_CSRF_VERSION,
+	VIDEO_PARAMS,
+	BASE_URL,
+	HOST,
+} from '../settings';
+import { videoException } from '../exception/videoException';
 
 class VideoHandler {
-	UA =
-		'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36';
-	MIN_MARGIN_SCHEDULE_TIME = 900; // 15 minutes
-	MAX_MARGIN_SCHEDULE_TIME = 864000; // 10 days
-	MARGIN_TO_UPLOAD_VIDEO = 300; // 5 minutes
-
 	private headers!: Record<string, any>;
 
 	private async getHeader(exc: IExecuteFunctions) {
 		if (!this.headers) {
 			const tiktokApi = await exc.getCredentials('tiktokApi');
 			this.headers = {
-				'User-Agent': this.UA,
-				'X-Secsdk-Csrf-Request': '1',
-				'X-Secsdk-Csrf-Version': '1.2.8',
+				'User-Agent': UA,
+				'X-Secsdk-Csrf-Request': X_SECSDK_CSRF_REQUEST,
+				'X-Secsdk-Csrf-Version': X_SECSDK_CSRF_VERSION,
 				Cookie: tiktokApi.cookie,
+				// origin: BASE_URL,
+				// referer: BASE_URL,
+				// Host: HOST,
 			};
 		}
 		return this.headers;
@@ -36,113 +42,6 @@ class VideoHandler {
 			creationid += characters.charAt(Math.floor(Math.random() * characters.length));
 		}
 		return creationid;
-	}
-
-	async uploadVideo(
-		exc: IExecuteFunctions,
-		description: string,
-		binaryData: IBinaryData,
-		schedule_time?: number,
-	) {
-		const headers = await this.getHeader(exc);
-
-		const { creationID, project_id } = await this.initOneUpload(exc);
-		const { videoId, commitResponse } = await this.loadVideo(exc, binaryData);
-
-		const postQuery: Record<string, any> = {
-			app_name: 'tiktok_web',
-			channel: 'tiktok_web',
-			device_platform: 'web',
-			aid: 1988,
-		};
-
-		let data: Record<string, any> = {
-			post_common_info: {
-				creation_id: creationID,
-				enter_post_page_from: 1,
-				post_type: 3,
-			},
-			feature_common_info_list: [
-				{
-					geofencing_regions: [],
-					playlist_name: '',
-					playlist_id: '',
-					tcm_params: '{"commerce_toggle_info":{}}',
-					sound_exemption: 0,
-					anchors: [],
-					vedit_common_info: {
-						draft: '',
-						video_id: videoId,
-					},
-					privacy_setting_info: {
-						visibility_type: 0,
-						allow_duet: 1,
-						allow_stitch: 1,
-						allow_comment: 1,
-					},
-				},
-			],
-			single_post_req_list: [
-				{
-					batch_index: 0,
-					video_id: videoId,
-					is_long_video: 0,
-					single_post_feature_info: {
-						// text: title,
-						// text_extra: [],
-						// markup_text: title,
-						music_info: {},
-						poster_delay: 0,
-						text: 'Generated video 1 #ve',
-						text_extra: [
-							{
-								tag_id: '0',
-								start: 18,
-								end: 21,
-								user_id: '',
-								type: 1,
-								hashtag_name: 've',
-							},
-						],
-						markup_text: 'Generated video 1 <h id="0">#ve</h>',
-					},
-				},
-			],
-		};
-
-		// if (schedule_time ?? 0 > 0) {
-		// 	data.upload_param.schedule_time = schedule_time;
-		// }
-		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), this.UA);
-
-		const test = await exc.helpers.request({
-			method: 'POST',
-			url: 'https://www.tiktok.com/tiktok/web/project/post/v1/',
-			headers: {
-				...headers,
-				'content-type': 'application/json',
-				'user-agent': this.UA,
-				origin: 'https://www.tiktok.com',
-				referer: 'https://www.tiktok.com/',
-				Host: 'www.tiktok.com',
-			},
-			qs: postQuery,
-			body: JSON.stringify(data),
-			json: true,
-		});
-
-		return {
-			// url_prefix,
-			// title,
-			// tags,
-			// schedule_time,
-			creationID,
-			project_id,
-			test,
-			postQuery,
-			commitResponse,
-			params: qs.stringify(postQuery),
-		};
 	}
 
 	private async initOneUpload(exc: IExecuteFunctions) {
@@ -198,7 +97,7 @@ class VideoHandler {
 
 		const signedApplyUpload = aws4.sign(
 			{
-				host: 'www.tiktok.com',
+				host: HOST,
 				path: `/top/v1?${queryParams}`,
 				service: 'vod',
 				region: 'ap-singapore-1',
@@ -208,7 +107,7 @@ class VideoHandler {
 		);
 		const applyUploadResponse = await exc.helpers.request({
 			method: 'GET',
-			url: `https://www.tiktok.com/top/v1?${queryParams}`,
+			url: `${BASE_URL}/top/v1?${queryParams}`,
 			headers: signedApplyUpload.headers,
 			json: true,
 		});
@@ -246,7 +145,7 @@ class VideoHandler {
 			body: `-----------------------------${rand}--`,
 			json: true,
 		});
-		return repsStartUpload.uploadID;
+		return repsStartUpload.payload.uploadID;
 	}
 
 	private async uploadDataChunk(
@@ -254,12 +153,11 @@ class VideoHandler {
 		fileContent: any,
 		uploadHost: string,
 		storeUri: string,
-		videoAuth: string,
+		videoAuth: Record<string, any>,
 		uploadID: string,
 	) {
 		const crcs: any[] = [];
 		let offset = 0;
-
 		for await (const chunk of fileContent) {
 			const crc = crc32(chunk).toString(16).padStart(8, '0');
 			offset += 1;
@@ -285,7 +183,7 @@ class VideoHandler {
 		exc: IExecuteFunctions,
 		uploadHost: string,
 		storeUri: string,
-		videoAuth: string,
+		videoAuth: Record<string, any>,
 		uploadID: string,
 		crcs: any[],
 	) {
@@ -298,8 +196,8 @@ class VideoHandler {
 			url: completeUrl,
 			headers: {
 				Authorization: videoAuth,
-				origin: 'https://www.tiktok.com',
 				'Content-Type': 'text/plain;charset=UTF-8',
+				origin: BASE_URL,
 			},
 			body: completeData,
 		});
@@ -347,50 +245,263 @@ class VideoHandler {
 		return commitResponse;
 	}
 
-	async loadVideo(exc: IExecuteFunctions, binaryData: IBinaryData) {
+	
+	private async releaseVideo(
+		exc: IExecuteFunctions,
+		creationID: string,
+		videoId: string,
+		description: string,
+		scheduleTime: number,
+	) {
+		const postQuery: Record<string, any> = {
+			app_name: 'tiktok_web',
+			channel: 'tiktok_web',
+			device_platform: 'web',
+			aid: 1988,
+		};
+
+		let data: Record<string, any> = {
+			post_common_info: {
+				creation_id: creationID,
+				enter_post_page_from: 1,
+				post_type: 3,
+			},
+			feature_common_info_list: [
+				{
+					geofencing_regions: [],
+					playlist_name: '',
+					playlist_id: '',
+					tcm_params: '{"commerce_toggle_info":{}}',
+					sound_exemption: 0,
+					anchors: [],
+					vedit_common_info: {
+						draft: '',
+						video_id: videoId,
+					},
+					privacy_setting_info: {
+						visibility_type: 0,
+						allow_duet: 1,
+						allow_stitch: 1,
+						allow_comment: 1,
+					},
+				},
+			],
+			single_post_req_list: [
+				{
+					batch_index: 0,
+					video_id: videoId,
+					is_long_video: 0,
+					single_post_feature_info: {
+						// text: title,
+						// text_extra: [],
+						// markup_text: title,
+						music_info: {},
+						poster_delay: 0,
+						text: 'Generated video 1 #ve',
+						text_extra: [
+							{
+								tag_id: '0',
+								start: 18,
+								end: 21,
+								user_id: '',
+								type: 1,
+								hashtag_name: 'veo',
+							},
+						],
+						markup_text: 'Generated video 1 <h id="0">#veo</h>',
+					},
+				},
+			],
+		};
+
+		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), UA);
+
+		const test = await exc.helpers.request({
+			method: 'POST',
+			url: `${BASE_URL}/tiktok/web/project/post/v1/`,
+			headers: {
+				...(await this.getHeader(exc)),
+				'content-type': 'application/json',
+			},
+			qs: postQuery,
+			body: JSON.stringify(data),
+			json: true,
+		});
+		return test;
+	}
+
+	async uploadVideo(exc: IExecuteFunctions, step: number) {
+		const description = exc.getNodeParameter(VIDEO_PARAMS.UPLOAD.DESCRIPTION, step) as string;
+		const scheduleTime = exc.getNodeParameter(VIDEO_PARAMS.UPLOAD.SCHEDULE_TIME, step) as number;
+		const binaryProperty = exc.getNodeParameter(
+			VIDEO_PARAMS.UPLOAD.BINARY_PROPERTY,
+			step,
+		) as string;
+		const binaryData = exc.helpers.assertBinaryData(step, binaryProperty);
+
 		const { contentLength, fileContent } = await extractBinaryData(exc, binaryData);
 
-		const { accessKeyId, secretAccessKey, sessionToken } = await this.authUpload(exc);
+		// const { accessKeyId, secretAccessKey, sessionToken } = await this.authUpload(exc);
 
-		const { videoId, sessionKey, storeUri, uploadHost, videoAuth } = await this.signedUploadInfo(
-			exc,
-			accessKeyId,
-			secretAccessKey,
-			sessionToken,
-			contentLength?.toString(),
-		);
+		let creationID = '',
+			project_id = '',
+			accessKeyId = '',
+			secretAccessKey = '',
+			sessionToken = '',
+			videoId = '',
+			sessionKey = '',
+			storeUri = '',
+			uploadHost = '',
+			videoAuth = {},
+			uploadID = '',
+			crcs = [];
 
-		// Step 3: Start Upload
+		// step 1: authUpload
 
-		const uploadID = await this.startUpload(exc, uploadHost, storeUri, videoAuth);
+		try {
+			const repsAuthUpload = await this.authUpload(exc);
+			accessKeyId = repsAuthUpload.accessKeyId;
+			secretAccessKey = repsAuthUpload.secretAccessKey;
+			sessionToken = repsAuthUpload.sessionToken;
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 1,
+					info: 'authUpload',
+				},
+				error,
+			);
+		}
 
-		// Step 4: Upload Chunks
+		// step 2: initOneUpload
+		try {
+			const repsInitOneUpload = await this.initOneUpload(exc);
+			creationID = repsInitOneUpload.creationID;
+			project_id = repsInitOneUpload.project_id;
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 2,
+					info: 'initOneUpload',
+				},
+				error,
+			);
+		}
 
-		const crcs = await this.uploadDataChunk(
-			exc,
-			fileContent,
-			uploadHost,
-			storeUri,
-			videoAuth,
-			uploadID,
-		);
+		// step 3: signedUploadInfo
 
-		// Step 5: Complete Upload
+		try {
+			const repsSignedUploadInfo = await this.signedUploadInfo(
+				exc,
+				accessKeyId,
+				secretAccessKey,
+				sessionToken,
+				contentLength?.toString(),
+			);
+			videoId = repsSignedUploadInfo.videoId;
+			sessionKey = repsSignedUploadInfo.sessionKey;
+			storeUri = repsSignedUploadInfo.storeUri;
+			uploadHost = repsSignedUploadInfo.uploadHost;
+			videoAuth = repsSignedUploadInfo.videoAuth;
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 3,
+					info: 'signedUploadInfo',
+				},
+				error,
+			);
+		}
 
-		await this.completeUpload(exc, uploadHost, storeUri, videoAuth, uploadID, crcs);
+		// step 4: Start Upload
 
-		// Step 6: Commit Upload (AWS SigV4)
-		const commitResponse = await this.commitUpload(
-			exc,
-			sessionKey,
-			accessKeyId,
-			secretAccessKey,
-			sessionToken,
-		);
+		try {
+			const repsStartUpload = await this.startUpload(
+				exc,
+				uploadHost,
+				storeUri,
+				videoAuth,
+			);
+			uploadID = repsStartUpload.uploadID;
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 4,
+					info: 'startUpload',
+				},
+				error,
+			);
+		}
+
+		// step 5: uploadPart
+
+		try {
+			const repsUploadPart = await this.uploadDataChunk(
+				exc,
+				fileContent,
+				uploadHost,
+				storeUri,
+				videoAuth,
+				uploadID,
+			);
+			crcs = repsUploadPart;
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 5,
+					info: 'uploadPart',
+				},
+				error,
+			);
+		}
+
+
+		// step 6: completeUpload
+
+		try {
+			await this.completeUpload(exc, uploadHost, storeUri, videoAuth, uploadID, crcs);
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 6,
+					info: 'completeUpload',
+				},
+				error,
+			);
+		}
+
+		//step 7 :  Commit Upload (AWS SigV4)
+		try {
+			await this.commitUpload(
+				exc,
+				sessionKey,
+				accessKeyId,
+				secretAccessKey,
+				sessionToken,
+			);
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 7,
+					info: 'commitUpload',
+				},
+				error,
+			);
+		}
+
+
+
+
+
+
+		const test = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
+
 		return {
-			// signedCommit,
-			commitResponse,
+			creationID,
+			project_id,
+			test,
 			videoId,
+			// commitResponse,
 		};
 	}
 }
