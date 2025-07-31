@@ -38,20 +38,6 @@ export const videoFields: INodeProperties[] = [
         default: '',
     },
     {
-        displayName: 'Tags',
-        name: 'tags',
-        type: 'string',
-        required: true,
-        displayOptions: {
-            show: {
-                operation: ['upload'],
-                resource: ['video'],
-            },
-        },
-        default: '',
-        description: "The video's tags",
-    },
-    {
         displayName: 'Input Binary Field',
         name: 'binaryProperty',
         type: 'string',
@@ -78,23 +64,23 @@ export const videoFields: INodeProperties[] = [
             },
         },
         options: [
-            {
-                displayName: 'url_prefix',
-                name: 'url_prefix',
-                type: 'options',
-                options: [
-                    {
-                        name: 'www',
-                        value: 'www',
-                    },
-                    {
-                        name: 'us',
-                        value: 'us',
-                    },
-                ],
-                default: 'www',
-                description: 'Publish status',
-            },
+            // {
+            //     displayName: 'url_prefix',
+            //     name: 'url_prefix',
+            //     type: 'options',
+            //     options: [
+            //         {
+            //             name: 'www',
+            //             value: 'www',
+            //         },
+            //         {
+            //             name: 'us',
+            //             value: 'us',
+            //         },
+            //     ],
+            //     default: 'www',
+            //     description: 'Publish status',
+            // },
             {
 				displayName: 'Schedule Time',
 				name: 'schedule_time',

@@ -59,12 +59,11 @@ export class T2Tiktok implements INodeType {
             try{
                if(resource==="video"){
 					if(operation==="upload"){
-						const title = this.getNodeParameter('title', i) as string;
-						const tags = this.getNodeParameter('tags', i) as string;
+						const description = this.getNodeParameter('title', i) as string;
 						const binaryProperty = this.getNodeParameter('binaryProperty', i);
 						const binaryData = this.helpers.assertBinaryData(i, binaryProperty);
 						const updateFields = this.getNodeParameter('updateFields', i);
-						const rs = await videoHandler.uploadVideo(this, title, tags,binaryData,updateFields?.url_prefix as string,updateFields.schedule_time as number);
+						const rs = await videoHandler.uploadVideo(this, description,binaryData,updateFields.schedule_time as number);
 						returnData.push({ json: rs });
 					}
 			   }
