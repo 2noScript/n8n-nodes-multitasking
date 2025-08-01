@@ -49,3 +49,41 @@ export async function extractBinaryData(exc: IExecuteFunctions, binaryData: IBin
 }
 
 
+
+export function extractHashtag(text: string): string[] {
+  const seen = new Set<string>();
+
+  try {
+    if (typeof text !== 'string') return [];
+
+    const regex = /#([\p{L}\p{N}_\p{Emoji_Presentation}]+)/gu;
+
+    const matches = text.matchAll(regex);
+    for (const match of matches) {
+      seen.add(match[1]); // match[1] là phần sau dấu #
+    }
+  } catch (error) {
+    // Nếu có lỗi xảy ra (ví dụ trình duyệt không hỗ trợ Unicode Property Escapes)
+    console.error('extractHashtag error:', error);
+    return [];
+  }
+
+  return Array.from(seen);
+}
+
+type HashtagPosition = { start: number; end: number };
+
+export function findAllHashtagContentPositions(text: string, tag: string): HashtagPosition[] {
+  const hashtag = `#${tag}`;
+  const results: HashtagPosition[] = [];
+  let index = 0;
+
+  while ((index = text.indexOf(hashtag, index)) !== -1) {
+    const start = index + 1; // bắt đầu sau dấu #
+    const end = start + [...tag].length;
+    results.push({ start, end });
+    index += 1; 
+  }
+
+  return results;
+}

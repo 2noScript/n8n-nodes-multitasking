@@ -1,10 +1,14 @@
-import {  IExecuteFunctions } from 'n8n-workflow';
+import { IExecuteFunctions } from 'n8n-workflow';
 import aws4 from 'aws4';
 import { crc32 } from 'zlib';
 import crypto from 'crypto';
 import qs from 'qs';
 import { get_x_bogus } from '../algorithm/x_bogus';
-import { extractBinaryData } from '../../../share/globalUtils';
+import {
+	extractBinaryData,
+	extractHashtag,
+	findAllHashtagContentPositions,
+} from '../../../share/globalUtils';
 import {
 	UA,
 	X_SECSDK_CSRF_REQUEST,
@@ -26,9 +30,6 @@ class VideoHandler {
 				'X-Secsdk-Csrf-Request': X_SECSDK_CSRF_REQUEST,
 				'X-Secsdk-Csrf-Version': X_SECSDK_CSRF_VERSION,
 				Cookie: tiktokApi.cookie,
-				// origin: BASE_URL,
-				// referer: BASE_URL,
-				// Host: HOST,
 			};
 		}
 		return this.headers;
@@ -245,7 +246,72 @@ class VideoHandler {
 		return commitResponse;
 	}
 
-	
+	private async getTagsExtra(exc: IExecuteFunctions, description: string) {
+		const rawHashtags = extractHashtag(description);
+		const checkHashtagUrl = 'https://www.tiktok.com/api/upload/challenge/sug/';
+		let newDescription = description;
+		let textExtra = [];
+		let markupText = description;
+		let errorr_list:any[]=[]
+		let index=0;
+		const hashtags: string[] = [];
+
+		const requests = rawHashtags.map((hashtag) =>
+			exc.helpers.request({
+				method: 'GET',
+				url: `${checkHashtagUrl}`,
+				qs: {
+					keyword: hashtag,
+				},
+				json: true,
+			}),
+		);
+
+		const results = await Promise.all(requests);
+
+		rawHashtags.forEach((hashtag, index) => {
+			const result = results[index];
+			let verified = hashtag;
+			const hashtagRegex = new RegExp(`#${hashtag}\\b`, 'g');
+			try {
+				verified = result.sug_list[0].cha_name;
+			} catch (e) {
+				errorr_list.push(e)
+			}
+
+			if (verified) {
+				newDescription = newDescription.replace(hashtagRegex, `#${verified}`);
+				markupText = markupText.replace(hashtagRegex, `<h id="${index}">#${verified}</h>`);
+				hashtags.push(verified);
+			}
+
+		});
+
+
+		for (const hashtag of hashtags) {
+			const positionList = findAllHashtagContentPositions(newDescription, hashtag);
+			for (const { start, end } of positionList) {
+				textExtra.push({
+					tag_id: `${index}`,
+					start,
+					end,
+					user_id: '',
+					type: 1,
+					hashtag_name: hashtag,
+				});
+			}
+			index++;
+		}
+
+		return {
+			newDescription,
+			textExtra,
+			markupText,
+			errorr_list
+
+		};
+	}
+
 	private async releaseVideo(
 		exc: IExecuteFunctions,
 		creationID: string,
@@ -253,6 +319,8 @@ class VideoHandler {
 		description: string,
 		scheduleTime: number,
 	) {
+		const { newDescription, textExtra, markupText,errorr_list } = await this.getTagsExtra(exc, description);
+
 		const postQuery: Record<string, any> = {
 			app_name: 'tiktok_web',
 			channel: 'tiktok_web',
@@ -292,23 +360,11 @@ class VideoHandler {
 					video_id: videoId,
 					is_long_video: 0,
 					single_post_feature_info: {
-						// text: title,
-						// text_extra: [],
-						// markup_text: title,
 						music_info: {},
 						poster_delay: 0,
-						text: 'Generated video 1 #ve',
-						text_extra: [
-							{
-								tag_id: '0',
-								start: 18,
-								end: 21,
-								user_id: '',
-								type: 1,
-								hashtag_name: 'veo',
-							},
-						],
-						markup_text: 'Generated video 1 <h id="0">#veo</h>',
+						text: newDescription,
+						text_extra: textExtra,
+						markup_text: markupText,
 					},
 				},
 			],
@@ -316,18 +372,26 @@ class VideoHandler {
 
 		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), UA);
 
-		const test = await exc.helpers.request({
+		await exc.helpers.request({
 			method: 'POST',
 			url: `${BASE_URL}/tiktok/web/project/post/v1/`,
 			headers: {
 				...(await this.getHeader(exc)),
 				'content-type': 'application/json',
+				origin: BASE_URL,
+				referer: BASE_URL,
+				Host: HOST,
 			},
 			qs: postQuery,
-			body: JSON.stringify(data),
+			body: data,
 			json: true,
 		});
-		return test;
+		return JSON.stringify({
+			markupText,
+			newDescription,
+			textExtra,
+			errorr_list
+		});
 	}
 
 	async uploadVideo(exc: IExecuteFunctions, step: number) {
@@ -340,8 +404,6 @@ class VideoHandler {
 		const binaryData = exc.helpers.assertBinaryData(step, binaryProperty);
 
 		const { contentLength, fileContent } = await extractBinaryData(exc, binaryData);
-
-		// const { accessKeyId, secretAccessKey, sessionToken } = await this.authUpload(exc);
 
 		let creationID = '',
 			project_id = '',
@@ -416,12 +478,7 @@ class VideoHandler {
 		// step 4: Start Upload
 
 		try {
-			const repsStartUpload = await this.startUpload(
-				exc,
-				uploadHost,
-				storeUri,
-				videoAuth,
-			);
+			const repsStartUpload = await this.startUpload(exc, uploadHost, storeUri, videoAuth);
 			uploadID = repsStartUpload.uploadID;
 		} catch (error) {
 			videoException.captureUploadStep(
@@ -455,7 +512,6 @@ class VideoHandler {
 			);
 		}
 
-
 		// step 6: completeUpload
 
 		try {
@@ -472,13 +528,7 @@ class VideoHandler {
 
 		//step 7 :  Commit Upload (AWS SigV4)
 		try {
-			await this.commitUpload(
-				exc,
-				sessionKey,
-				accessKeyId,
-				secretAccessKey,
-				sessionToken,
-			);
+			await this.commitUpload(exc, sessionKey, accessKeyId, secretAccessKey, sessionToken);
 		} catch (error) {
 			videoException.captureUploadStep(
 				{
@@ -488,13 +538,19 @@ class VideoHandler {
 				error,
 			);
 		}
+		let test = {};
 
-
-
-
-
-
-		const test = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
+		try {
+			test = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
+		} catch (error) {
+			videoException.captureUploadStep(
+				{
+					step: 8,
+					info: 'releaseVideo',
+				},
+				error,
+			);
+		}
 
 		return {
 			creationID,
