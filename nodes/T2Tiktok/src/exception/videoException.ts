@@ -8,10 +8,10 @@ export type stepErrorMessage = {
 
 
 class VideoException{
-    captureUploadStep(message:stepErrorMessage, info:string){
+    captureUploadStep(message:stepErrorMessage, info:any){
         throw {
             message,
-            info,
+            info:JSON.stringify(info),
         }
     }
     

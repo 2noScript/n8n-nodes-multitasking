@@ -19,6 +19,7 @@ import {
 } from '../settings';
 import { videoException } from '../exception/videoException';
 
+
 class VideoHandler {
 	private headers!: Record<string, any>;
 
@@ -129,7 +130,7 @@ class VideoHandler {
 		exc: IExecuteFunctions,
 		uploadHost: string,
 		storeUri: string,
-		videoAuth: Record<string, any>,
+		videoAuth: string,
 	) {
 		const rand = Array.from({ length: 30 }, () => Math.floor(Math.random() * 10).toString()).join(
 			'',
@@ -154,7 +155,7 @@ class VideoHandler {
 		fileContent: any,
 		uploadHost: string,
 		storeUri: string,
-		videoAuth: Record<string, any>,
+		videoAuth: string,
 		uploadID: string,
 	) {
 		const crcs: any[] = [];
@@ -184,7 +185,7 @@ class VideoHandler {
 		exc: IExecuteFunctions,
 		uploadHost: string,
 		storeUri: string,
-		videoAuth: Record<string, any>,
+		videoAuth: string,
 		uploadID: string,
 		crcs: any[],
 	) {
@@ -249,12 +250,13 @@ class VideoHandler {
 	private async getTagsExtra(exc: IExecuteFunctions, description: string) {
 		const rawHashtags = extractHashtag(description);
 		const checkHashtagUrl = 'https://www.tiktok.com/api/upload/challenge/sug/';
+		const hashtags: string[] = [];
+		const headers=await this.getHeader(exc);
 		let newDescription = description;
 		let textExtra = [];
 		let markupText = description;
-		let errorr_list:any[]=[]
+		let error_list:any[]=[]
 		let index=0;
-		const hashtags: string[] = [];
 
 		const requests = rawHashtags.map((hashtag) =>
 			exc.helpers.request({
@@ -264,6 +266,8 @@ class VideoHandler {
 					keyword: hashtag,
 				},
 				json: true,
+		        headers
+
 			}),
 		);
 
@@ -276,7 +280,7 @@ class VideoHandler {
 			try {
 				verified = result.sug_list[0].cha_name;
 			} catch (e) {
-				errorr_list.push(e)
+				error_list.push(e)
 			}
 
 			if (verified) {
@@ -307,8 +311,7 @@ class VideoHandler {
 			newDescription,
 			textExtra,
 			markupText,
-			errorr_list
-
+			error_list
 		};
 	}
 
@@ -319,7 +322,7 @@ class VideoHandler {
 		description: string,
 		scheduleTime: number,
 	) {
-		const { newDescription, textExtra, markupText,errorr_list } = await this.getTagsExtra(exc, description);
+		const { newDescription, textExtra, markupText } = await this.getTagsExtra(exc, description);
 
 		const postQuery: Record<string, any> = {
 			app_name: 'tiktok_web',
@@ -372,7 +375,7 @@ class VideoHandler {
 
 		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), UA);
 
-		await exc.helpers.request({
+		const respRelease =   await exc.helpers.request({
 			method: 'POST',
 			url: `${BASE_URL}/tiktok/web/project/post/v1/`,
 			headers: {
@@ -386,12 +389,14 @@ class VideoHandler {
 			body: data,
 			json: true,
 		});
-		return JSON.stringify({
-			markupText,
-			newDescription,
-			textExtra,
-			errorr_list
-		});
+		let id=""
+		if (respRelease.status_code===0	) {
+			id=respRelease.single_post_resp_list[0].item_id
+		}
+		return {
+			id 
+		}
+	
 	}
 
 	async uploadVideo(exc: IExecuteFunctions, step: number) {
@@ -406,7 +411,7 @@ class VideoHandler {
 		const { contentLength, fileContent } = await extractBinaryData(exc, binaryData);
 
 		let creationID = '',
-			project_id = '',
+			// project_id = '',
 			accessKeyId = '',
 			secretAccessKey = '',
 			sessionToken = '',
@@ -414,7 +419,7 @@ class VideoHandler {
 			sessionKey = '',
 			storeUri = '',
 			uploadHost = '',
-			videoAuth = {},
+			videoAuth = "",
 			uploadID = '',
 			crcs = [];
 
@@ -439,7 +444,7 @@ class VideoHandler {
 		try {
 			const repsInitOneUpload = await this.initOneUpload(exc);
 			creationID = repsInitOneUpload.creationID;
-			project_id = repsInitOneUpload.project_id;
+			// project_id = repsInitOneUpload.project_id;
 		} catch (error) {
 			videoException.captureUploadStep(
 				{
@@ -477,9 +482,9 @@ class VideoHandler {
 
 		// step 4: Start Upload
 
+
 		try {
-			const repsStartUpload = await this.startUpload(exc, uploadHost, storeUri, videoAuth);
-			uploadID = repsStartUpload.uploadID;
+			uploadID = await this.startUpload(exc, uploadHost, storeUri, videoAuth);
 		} catch (error) {
 			videoException.captureUploadStep(
 				{
@@ -538,27 +543,11 @@ class VideoHandler {
 				error,
 			);
 		}
-		let test = {};
 
-		try {
-			test = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
-		} catch (error) {
-			videoException.captureUploadStep(
-				{
-					step: 8,
-					info: 'releaseVideo',
-				},
-				error,
-			);
-		}
 
-		return {
-			creationID,
-			project_id,
-			test,
-			videoId,
-			// commitResponse,
-		};
+		const id = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
+		
+		return id
 	}
 }
 
