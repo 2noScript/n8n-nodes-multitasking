@@ -63,14 +63,14 @@ Optimize your workflow in n8n — these nodes handle video uploads and validatio
 
 ## Docs
 
-| Node        | Documentation Path                       | Status         | Version    |
-| ----------- | ---------------------------------------- | -------------- | ---------- |
-| T2YouTube   | [README.md](nodes/T2YouTube/README.md)   | ✅ Completed   | 1.0.0      |
-| T2Facebook  | [README.md](nodes/T2Facebook/README.md)  | ✅ Completed   | 1.0.0      |
-| T2Twitter   | [README.md](nodes/T2Twitter/README.md)   | ❌ In Progress | -          |
-| T2Instagram | [README.md](nodes/T2Instagram/README.md) | ❌ In Progress | -          |
-| T2Telegram  | [README.md](nodes/T2Telegram/README.md)  | ❌ In Progress | -          |
-| T2TikTok    | [README.md](nodes/T2TikTok/README.md)    | ✅ Completed   | beta 1.0.0 |
+| Node        | Documentation Path                       | Status         | Version |
+| ----------- | ---------------------------------------- | -------------- | ------- |
+| T2YouTube   | [README.md](nodes/T2YouTube/README.md)   | ✅ Completed   | 1.0.0   |
+| T2Facebook  | [README.md](nodes/T2Facebook/README.md)  | ✅ Completed   | 1.0.0   |
+| T2Twitter   | [README.md](nodes/T2Twitter/README.md)   | ❌ In Progress | -       |
+| T2Instagram | [README.md](nodes/T2Instagram/README.md) | ❌ In Progress | -       |
+| T2Telegram  | [README.md](nodes/T2Telegram/README.md)  | ❌ In Progress | -       |
+| T2Tiktok    | [README.md](nodes/T2Tiktok/README.md)    | ✅ Completed   | 1.0.0   |
 
 ## License
 

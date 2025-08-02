@@ -12,30 +12,30 @@ export const reelDescription: INodeProperties[] = [
 			},
 		},
 		options: [
-			{
-				name: 'Delete',
-				value: 'delete',
-				description: 'Delete a Reel',
-				action: 'Delete a Reel',
-			},
-			{
-				name: 'Get',
-				value: 'get',
-				description: 'Get a Reel',
-				action: 'Get a Reel',
-			},
-			{
-				name: 'Get Many',
-				value: 'getAll',
-				description: 'Retrieve many Reels',
-				action: 'Get many Reels',
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				description: 'Update a Reel',
-				action: 'Update a Reel',
-			},
+			// {
+			// 	name: 'Delete',
+			// 	value: 'delete',
+			// 	description: 'Delete a Reel',
+			// 	action: 'Delete a Reel',
+			// },
+			// {
+			// 	name: 'Get',
+			// 	value: 'get',
+			// 	description: 'Get a Reel',
+			// 	action: 'Get a Reel',
+			// },
+			// {
+			// 	name: 'Get Many',
+			// 	value: 'getAll',
+			// 	description: 'Retrieve many Reels',
+			// 	action: 'Get many Reels',
+			// },
+			// {
+			// 	name: 'Update',
+			// 	value: 'update',
+			// 	description: 'Update a Reel',
+			// 	action: 'Update a Reel',
+			// },
 			{
 				name: 'Upload',
 				value: 'upload',
