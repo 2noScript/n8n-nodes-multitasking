@@ -60,10 +60,9 @@ export function extractHashtag(text: string): string[] {
 
     const matches = text.matchAll(regex);
     for (const match of matches) {
-      seen.add(match[1]); // match[1] là phần sau dấu #
+      seen.add(match[1]); 
     }
   } catch (error) {
-    // Nếu có lỗi xảy ra (ví dụ trình duyệt không hỗ trợ Unicode Property Escapes)
     console.error('extractHashtag error:', error);
     return [];
   }
@@ -79,7 +78,7 @@ export function findAllHashtagContentPositions(text: string, tag: string): Hasht
   let index = 0;
 
   while ((index = text.indexOf(hashtag, index)) !== -1) {
-    const start = index + 1; // bắt đầu sau dấu #
+    const start = index + 1; 
     const end = start + [...tag].length;
     results.push({ start, end });
     index += 1; 

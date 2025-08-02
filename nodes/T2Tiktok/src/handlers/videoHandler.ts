@@ -19,7 +19,6 @@ import {
 } from '../settings';
 import { videoException } from '../exception/videoException';
 
-
 class VideoHandler {
 	private headers!: Record<string, any>;
 
@@ -251,12 +250,12 @@ class VideoHandler {
 		const rawHashtags = extractHashtag(description);
 		const checkHashtagUrl = 'https://www.tiktok.com/api/upload/challenge/sug/';
 		const hashtags: string[] = [];
-		const headers=await this.getHeader(exc);
+		const headers = await this.getHeader(exc);
 		let newDescription = description;
 		let textExtra = [];
 		let markupText = description;
-		let error_list:any[]=[]
-		let index=0;
+		let error_list: any[] = [];
+		let index = 0;
 
 		const requests = rawHashtags.map((hashtag) =>
 			exc.helpers.request({
@@ -266,8 +265,7 @@ class VideoHandler {
 					keyword: hashtag,
 				},
 				json: true,
-		        headers
-
+				headers,
 			}),
 		);
 
@@ -280,7 +278,7 @@ class VideoHandler {
 			try {
 				verified = result.sug_list[0].cha_name;
 			} catch (e) {
-				error_list.push(e)
+				error_list.push(e);
 			}
 
 			if (verified) {
@@ -288,9 +286,7 @@ class VideoHandler {
 				markupText = markupText.replace(hashtagRegex, `<h id="${index}">#${verified}</h>`);
 				hashtags.push(verified);
 			}
-
 		});
-
 
 		for (const hashtag of hashtags) {
 			const positionList = findAllHashtagContentPositions(newDescription, hashtag);
@@ -311,7 +307,7 @@ class VideoHandler {
 			newDescription,
 			textExtra,
 			markupText,
-			error_list
+			error_list,
 		};
 	}
 
@@ -372,10 +368,16 @@ class VideoHandler {
 				},
 			],
 		};
+		if (scheduleTime > 0) {
+		   data.feature_common_info_list[0]={
+			...data.feature_common_info_list[0],
+			schedule_time:scheduleTime + Math.floor(Date.now() / 1000),
+		   }
+		}
 
 		postQuery['X-Bogus'] = get_x_bogus(qs.stringify(postQuery), JSON.stringify(data), UA);
 
-		const respRelease =   await exc.helpers.request({
+		const respRelease = await exc.helpers.request({
 			method: 'POST',
 			url: `${BASE_URL}/tiktok/web/project/post/v1/`,
 			headers: {
@@ -389,14 +391,11 @@ class VideoHandler {
 			body: data,
 			json: true,
 		});
-		let id=""
-		if (respRelease.status_code===0	) {
-			id=respRelease.single_post_resp_list[0].item_id
+
+		if (respRelease.status_code === 0) {
+			return respRelease.single_post_resp_list[0].item_id;
 		}
-		return {
-			id 
-		}
-	
+		return undefined;
 	}
 
 	async uploadVideo(exc: IExecuteFunctions, step: number) {
@@ -419,7 +418,7 @@ class VideoHandler {
 			sessionKey = '',
 			storeUri = '',
 			uploadHost = '',
-			videoAuth = "",
+			videoAuth = '',
 			uploadID = '',
 			crcs = [];
 
@@ -482,7 +481,6 @@ class VideoHandler {
 
 		// step 4: Start Upload
 
-
 		try {
 			uploadID = await this.startUpload(exc, uploadHost, storeUri, videoAuth);
 		} catch (error) {
@@ -544,10 +542,11 @@ class VideoHandler {
 			);
 		}
 
-
 		const id = await this.releaseVideo(exc, creationID, videoId, description, scheduleTime);
-		
-		return id
+
+		return {
+			id,
+		};
 	}
 }
 
